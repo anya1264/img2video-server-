@@ -4,7 +4,7 @@ import uuid
 import subprocess
 import threading
 from pathlib import Path
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from werkzeug.utils import secure_filename
 
 # Minimal Flask app — no auth, no limits (per tua richiesta)
@@ -114,6 +114,16 @@ def generate():
     except TypeError:
         # compatibilità con Flask più vecchie
         return send_file(output_path, as_attachment=True, attachment_filename="video.mp4")
+
+@app.route("/health", methods=["GET"])
+def health():
+    # semplice endpoint per i health checks del provider
+    return jsonify({"status": "ok"}), 200
+
+@app.errorhandler(413)
+def too_large(e):
+    flash("File troppo grande. Riduci la dimensione e riprova.", "error")
+    return redirect(url_for("index"))
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
