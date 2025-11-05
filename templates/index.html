@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Immagine → Video (Flask + ffmpeg)</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="container">
+    <h1>Converti immagine + audio → MP4</h1>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="messages">
+          {% for category, msg in messages %}
+            <div class="flash {{ category }}">{{ msg }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <form method="post" action="{{ url_for('generate') }}" enctype="multipart/form-data" class="upload-form">
+      <label class="file-label">
+        Seleziona immagine (png, jpg, jpeg)
+        <input type="file" name="image" accept="image/png, image/jpeg" required>
+      </label>
+
+      <label class="file-label">
+        Seleziona audio (mp3, wav, m4a, aac, ogg)
+        <input type="file" name="audio" accept="audio/*" required>
+      </label>
+
+      <div class="hint">
+        L'immagine resterà fissa per tutta la durata dell'audio. Evita file troppo grandi per tempi di codifica più rapidi.
+      </div>
+
+      <button type="submit" class="btn">Genera e scarica MP4</button>
+    </form>
+
+    <footer>
+      <small>Richiede ffmpeg installato nel container/server. Progetto minimale per uso personale.</small>
+    </footer>
+  </main>
+</body>
+</html>
