@@ -1,4 +1,6 @@
-  # Dockerfile minimo per eseguire l'app Flask con ffmpeg nativo
+# Dockerfile aggiornato: usa uno start script che esegue gunicorn con exec
+# in modo che le variabili d'ambiente (PORT) vengano espanse e i segnali
+# vengano inoltrati correttamente (migliore rispetto a "sh -c").
 FROM python:3.11-slim
 
 # Installare ffmpeg e pacchetti minimi
@@ -7,7 +9,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Impostazioni di lavoro
 WORKDIR /app
 
 # Copia e installa dipendenze Python
@@ -17,12 +18,16 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # Copia il codice dell'app
 COPY . /app
 
+# Crea lo script di avvio che esegue gunicorn con 'exec' permettendo
+# l'espansione di $PORT e garantendo che i segnali vengano inoltrati
+RUN printf '#!/bin/sh\nset -e\n: "${PORT:=8080}"\nexec gunicorn -w 1 -b 0.0.0.0:${PORT} app:app\n' > /app/start.sh && \
+    chmod +x /app/start.sh
+
 # Crea la cartella per upload temporanei
 RUN mkdir -p /app/uploads && chown -R root:root /app/uploads
 
-# Porta e variabili d'ambiente
 ENV PORT=8080
 EXPOSE 8080
 
-# Avvia con gunicorn (un solo worker per usare poche risorse)
-CMD ["sh", "-c", "gunicorn -w 1 -b 0.0.0.0:${PORT:-8080} app:app"]
+# Usa lo script come entrypoint (exec dentro lo script)
+ENTRYPOINT ["/app/start.sh"]
